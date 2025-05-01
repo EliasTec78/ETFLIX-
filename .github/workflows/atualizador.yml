@@ -27,5 +27,6 @@ jobs:
             echo "Sem mudanças, não precisa commitar."
           else
             git commit -m "Atualização automática da lista M3U"
+            git pull --rebase
             git push
           fi
