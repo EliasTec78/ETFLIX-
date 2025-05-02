@@ -1,10 +1,10 @@
-name: Atualizar Lista M3U
+name: Atualizar Lista M3U por Link
 
 on:
   schedule:
     - cron: '0 12 * * *'   # 09h em Brasília
     - cron: '0 15 * * *'   # 12h em Brasília
-  workflow_dispatch:        # Execução manual
+  workflow_dispatch:
 
 jobs:
   atualizar:
@@ -13,20 +13,35 @@ jobs:
       - name: Checkout do repositório
         uses: actions/checkout@v3
 
-      - name: Baixar lista M3U
+      - name: Configurar Git
+        run: |
+          git config user.name "github-actions"
+          git config user.email "github-actions@github.com"
+
+      - name: Verificar se o link mudou
+        id: verificar
+        run: |
+          LINK_ATUAL=$(cat link_m3u.txt)
+          LINK_COMMITADO=$(git show HEAD:link_m3u.txt)
+
+          echo "Link atual: $LINK_ATUAL"
+          echo "Link anterior: $LINK_COMMITADO"
+
+          if [ "$LINK_ATUAL" != "$LINK_COMMITADO" ]; then
+            echo "mudou=true" >> $GITHUB_OUTPUT
+          else
+            echo "mudou=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Baixar e substituir M3U se o link mudou
+        if: steps.verificar.outputs.mudou == 'true'
         run: |
           LINK=$(cat link_m3u.txt)
           curl -L "$LINK" -o listaETflix.m3u
 
-      - name: Commit e push se houver mudanças
+      - name: Commit e push se o link mudou
+        if: steps.verificar.outputs.mudou == 'true'
         run: |
-          git config user.name "github-actions"
-          git config user.email "github-actions@github.com"
-          git add listaETflix.m3u
-          if git diff --cached --quiet; then
-            echo "Sem mudanças, não precisa commitar."
-          else
-            git commit -m "Atualização automática da lista M3U original"
-            git pull --rebase origin main  # Puxa e atualiza o repositório local com o remoto
-            git push
-          fi
+          git add link_m3u.txt listaETflix.m3u
+          git commit -m "Atualização automática da lista M3U por novo link"
+          git push
