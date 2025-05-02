@@ -13,7 +13,7 @@ jobs:
       - name: Checkout do repositório
         uses: actions/checkout@v3
 
-      - name: Baixar lista M3U original
+      - name: Baixar lista M3U
         run: |
           LINK=$(cat link_m3u.txt)
           curl -L "$LINK" -o listaETflix.m3u
@@ -27,5 +27,6 @@ jobs:
             echo "Sem mudanças, não precisa commitar."
           else
             git commit -m "Atualização automática da lista M3U original"
+            git pull --rebase origin main  # Puxa e atualiza o repositório local com o remoto
             git push
           fi
