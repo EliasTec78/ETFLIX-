@@ -13,7 +13,7 @@ jobs:
       - name: Checkout do repositório
         uses: actions/checkout@v3
 
-      - name: Baixar lista M3U
+      - name: Baixar lista M3U original
         run: |
           LINK=$(cat link_m3u.txt)
           curl -L "$LINK" -o listaETflix.m3u
@@ -26,7 +26,6 @@ jobs:
           if git diff --cached --quiet; then
             echo "Sem mudanças, não precisa commitar."
           else
-            git commit -m "Atualização automática da lista M3U"
-            git pull --rebase
+            git commit -m "Atualização automática da lista M3U original"
             git push
           fi
