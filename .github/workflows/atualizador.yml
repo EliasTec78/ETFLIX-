@@ -10,8 +10,10 @@ jobs:
   atualizar:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout do repositório
+      - name: Checkout do repositório com histórico completo
         uses: actions/checkout@v3
+        with:
+          fetch-depth: 0  # Garante acesso ao histórico do commit anterior
 
       - name: Configurar Git
         run: |
@@ -22,7 +24,7 @@ jobs:
         id: verificar
         run: |
           LINK_ATUAL=$(cat link_m3u.txt)
-          LINK_COMMITADO=$(git show HEAD:link_m3u.txt)
+          LINK_COMMITADO=$(git show HEAD~1:link_m3u.txt 2>/dev/null || echo "arquivo_inexistente")
 
           echo "Link atual: $LINK_ATUAL"
           echo "Link anterior: $LINK_COMMITADO"
