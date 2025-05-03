@@ -12,9 +12,11 @@ jobs:
       - name: Checkout do repositório
         uses: actions/checkout@v3
 
-      - name: Baixar arquivo M3U original
+      - name: Ler link do arquivo e baixar lista
         run: |
-          curl -L "http://invictosplay.pro/get.php?username=384707115936&password=378601443249&type=m3u_plus&output=mpegts" -o listaETflix.m3u
+          LINK=$(cat link_m3u.txt)
+          echo "Baixando lista a partir de: $LINK"
+          curl -L "$LINK" -o listaETflix.m3u
 
       - name: Commit e push da nova versão
         run: |
@@ -22,7 +24,7 @@ jobs:
           git config user.email "github-actions@github.com"
           git add listaETflix.m3u
           if git diff --cached --quiet; then
-            echo "Sem mudanças, não precisa commitar."
+            echo "Sem mudanças na lista."
           else
             git commit -m "Atualização automática da lista M3U original"
             git push
