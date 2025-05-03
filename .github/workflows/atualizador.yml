@@ -1,28 +1,43 @@
-name: Atualizar lista M3U original
+name: Atualizar Lista M3U
 
 on:
   schedule:
-    - cron: '0 12 * * *'   # Executa diariamente às 12h UTC
+    - cron: '0 12 * * *'   # 09h em Brasília
+    - cron: '0 15 * * *'   # 12h em Brasília
   workflow_dispatch:
 
 jobs:
-  baixar-e-substituir:
+  atualizar:
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout do repositório
         uses: actions/checkout@v3
 
-      - name: Baixar lista M3U usando link do arquivo
+      - name: Configurar Git
         run: |
-          LINK=$(cat link_m3u.txt)
-          echo "Baixando a lista de: $LINK"
-          curl -L "$LINK" -o ETFlix_list/ETFlix_list.m3u
+          git config user.name "github-actions"
+          git config user.email "github-actions@github.com"
 
-      - name: Commit e push da lista atualizada
+      - name: Verificar e baixar nova lista se link mudou
         run: |
-          git config --global user.name "github-actions"
-          git config --global user.email "actions@github.com"
-          git add ETFlix_list/ETFlix_list.m3u
-          git diff --cached --quiet || git commit -m "Atualização automática da lista M3U"
-          git push
+          LINK_ATUAL=$(cat link_m3u.txt)
+          echo "Link atual: $LINK_ATUAL"
+
+          LINK_ANTERIOR=""
+          if [ -f link_anterior.txt ]; then
+            LINK_ANTERIOR=$(cat link_anterior.txt)
+          fi
+          echo "Link anterior: $LINK_ANTERIOR"
+
+          if [ "$LINK_ATUAL" != "$LINK_ANTERIOR" ]; then
+            echo "Link mudou. Baixando nova lista..."
+            mkdir -p ETFlix_list
+            curl -L "$LINK_ATUAL" -o ETFlix_list/ETFlix_list.m3u
+
+            echo "$LINK_ATUAL" > link_anterior.txt
+            git add ETFlix_list/ETFlix_list.m3u link_anterior.txt
+            git commit -m "Atualização automática da lista M3U original"
+            git push
+          else
+            echo "Link não mudou. Nada será feito."
+          fi
