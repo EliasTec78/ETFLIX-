@@ -3,47 +3,49 @@ name: Atualizar ETFlix.m3u
 on:
   workflow_dispatch:
   schedule:
-    - cron: '0 */6 * * *' # A cada 6 horas
+    - cron: '0 12 * * *' # Executa todos os dias às 12h UTC
 
 jobs:
   atualizar-lista:
     runs-on: ubuntu-latest
+
     steps:
-      - name: Clonar repositório
+      - name: Clonar o repositório
         uses: actions/checkout@v3
 
-      - name: Instalar curl
-        run: sudo apt-get update && sudo apt-get install -y curl
-
-      - name: Ler link atual e anterior
-        id: links
+      - name: Ler link atual
+        id: link_atual
         run: |
-          LINK_ATUAL=$(cat link_m3u.txt)
-          echo "Link atual: $LINK_ATUAL"
-          if [ -f link_anterior.txt ]; then
-            LINK_ANTERIOR=$(cat link_anterior.txt)
-            echo "Link anterior: $LINK_ANTERIOR"
-          else
-            LINK_ANTERIOR=""
-            echo "link_anterior.txt não existe ainda."
+          echo "url_m3u=$(cat ETF/link_m3u.txt)" >> $GITHUB_OUTPUT
+
+      - name: Verificar se link anterior existe
+        run: |
+          if [ ! -f ETF/link_anterior.txt ]; then
+            echo "Primeira execução. Criando arquivo link_anterior.txt..."
+            echo "${{ steps.link_atual.outputs.url_m3u }}" > ETF/link_anterior.txt
           fi
-          echo "link_atual=$LINK_ATUAL" >> $GITHUB_OUTPUT
-          echo "link_anterior=$LINK_ANTERIOR" >> $GITHUB_OUTPUT
 
-      - name: Verificar se link mudou
-        if: steps.links.outputs.link_atual != steps.links.outputs.link_anterior
+      - name: Comparar link com anterior
+        id: comparar
         run: |
-          echo "Novo link detectado. Baixando arquivo..."
-          curl -L "${{ steps.links.outputs.link_atual }}" --output ETF/ETFlix.m3u
-          echo "${{ steps.links.outputs.link_atual }}" > link_anterior.txt
+          anterior=$(cat ETF/link_anterior.txt)
+          atual="${{ steps.link_atual.outputs.url_m3u }}"
+          if [ "$anterior" != "$atual" ]; then
+            echo "atualizar=true" >> $GITHUB_OUTPUT
+          else
+            echo "atualizar=false" >> $GITHUB_OUTPUT
 
-      - name: Commit e push se houve mudanças
+      - name: Baixar nova lista M3U
+        if: steps.comparar.outputs.atualizar == 'true'
+        run: |
+          curl -L "${{ steps.link_atual.outputs.url_m3u }}" -o ETF/ETFlix.m3u
+          echo "${{ steps.link_atual.outputs.url_m3u }}" > ETF/link_anterior.txt
+
+      - name: Commitar alterações
+        if: steps.comparar.outputs.atualizar == 'true'
         run: |
           git config user.name "github-actions"
           git config user.email "github-actions@github.com"
-          if git diff --quiet; then
-            echo "Nenhuma alteração detectada."
-          else
-            git add ETF/ETFlix.m3u link_anterior.txt
-            git commit -m "Atualização automática do ETFlix.m3u"
-            git push
+          git add ETF/ETFlix.m3u ETF/link_anterior.txt
+          git commit -m "Atualizando ETFlix.m3u automaticamente"
+          git push
