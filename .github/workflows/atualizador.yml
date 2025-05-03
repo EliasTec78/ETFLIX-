@@ -16,13 +16,13 @@ jobs:
         run: |
           LINK=$(cat link_m3u.txt)
           echo "Baixando lista a partir de: $LINK"
-          curl -L "$LINK" -o listaETflix.m3u
+          curl -L "$LINK" -o ETFlix_list.m3u
 
       - name: Commit e push da nova versão
         run: |
           git config user.name "github-actions"
           git config user.email "github-actions@github.com"
-          git add listaETflix.m3u
+          git add ETFlix_list.m3u
           if git diff --cached --quiet; then
             echo "Sem mudanças na lista."
           else
