@@ -1,51 +1,54 @@
 name: Atualizar ETFlix.m3u
 
 on:
-  workflow_dispatch:
+  push:
+    paths:
+      - ETF/link_m3u.txt
   schedule:
-    - cron: '0 12 * * *' # Executa todos os dias às 12h UTC
+    - cron: '0 10 * * *'  # Todos os dias às 10h UTC
+  workflow_dispatch:
 
 jobs:
-  atualizar-lista:
+  atualizar:
     runs-on: ubuntu-latest
-
     steps:
-      - name: Clonar o repositório
+      - name: Checkout do repositório
         uses: actions/checkout@v3
 
-      - name: Ler link atual
+      - name: Ler o link atual
         id: link_atual
         run: |
-          echo "url_m3u=$(cat ETF/link_m3u.txt)" >> $GITHUB_OUTPUT
+          link=$(cat ETF/link_m3u.txt)
+          echo "url_m3u=$link" >> $GITHUB_OUTPUT
 
-      - name: Verificar se link anterior existe
-        run: |
-          if [ ! -f ETF/link_anterior.txt ]; then
-            echo "Primeira execução. Criando arquivo link_anterior.txt..."
-            echo "${{ steps.link_atual.outputs.url_m3u }}" > ETF/link_anterior.txt
-          fi
-
-      - name: Comparar link com anterior
+      - name: Comparar com o link anterior
         id: comparar
         run: |
-          anterior=$(cat ETF/link_anterior.txt)
+          if [ -f ETF/link_anterior.txt ]; then
+            anterior=$(cat ETF/link_anterior.txt)
+          else
+            anterior=""
+          fi
+
           atual="${{ steps.link_atual.outputs.url_m3u }}"
+
           if [ "$anterior" != "$atual" ]; then
             echo "atualizar=true" >> $GITHUB_OUTPUT
           else
             echo "atualizar=false" >> $GITHUB_OUTPUT
+          fi
 
-      - name: Baixar nova lista M3U
+      - name: Baixar e substituir arquivo m3u
         if: steps.comparar.outputs.atualizar == 'true'
         run: |
-          curl -L "${{ steps.link_atual.outputs.url_m3u }}" -o ETF/ETFlix.m3u
+          curl -L "${{ steps.link_atual.outputs.url_m3u }}" --output ETF/ETFlix.m3u
           echo "${{ steps.link_atual.outputs.url_m3u }}" > ETF/link_anterior.txt
 
-      - name: Commitar alterações
+      - name: Commit e Push
         if: steps.comparar.outputs.atualizar == 'true'
         run: |
           git config user.name "github-actions"
-          git config user.email "github-actions@github.com"
+          git config user.email "github-actions@users.noreply.github.com"
           git add ETF/ETFlix.m3u ETF/link_anterior.txt
-          git commit -m "Atualizando ETFlix.m3u automaticamente"
+          git commit -m "Atualiza ETFlix.m3u com nova lista"
           git push
