@@ -1,15 +1,16 @@
 name: Atualizar ETFlix_list
 
 on:
-  schedule:
-    - cron: '0 */6 * * *'  # Executa a cada 6 horas
   workflow_dispatch:
+  schedule:
+    - cron: '0 * * * *'  # Executa a cada hora
 
 jobs:
-  atualizar:
+  atualizar-lista:
     runs-on: ubuntu-latest
+
     steps:
-      - name: Clonar repositório
+      - name: Checkout do repositório
         uses: actions/checkout@v3
 
       - name: Configurar Git
@@ -17,38 +18,34 @@ jobs:
           git config user.name "github-actions"
           git config user.email "github-actions@github.com"
 
+      - name: Criar pasta ETFlix_list se não existir
+        run: mkdir -p ETFlix_list
+
       - name: Ler link atual
-        id: link
+        id: ler_link
         run: |
-          LINK_ATUAL=$(cat link_m3u.txt)
-          echo "Link atual: $LINK_ATUAL"
-
-          if [ -f link_anterior.txt ]; then
-            LINK_ANTERIOR=$(cat link_anterior.txt)
-          else
-            LINK_ANTERIOR=""
-          fi
-
-          echo "Link anterior: $LINK_ANTERIOR"
-
-          if [ "$LINK_ATUAL" != "$LINK_ANTERIOR" ]; then
-            echo "link_modificado=true" >> $GITHUB_ENV
-            echo "$LINK_ATUAL" > link_anterior.txt
-          else
-            echo "link_modificado=false" >> $GITHUB_ENV
-          fi
-
-      - name: Baixar novo arquivo M3U
-        if: env.link_modificado == 'true'
-        run: |
-          mkdir -p public/ETFlix_list
           LINK=$(cat link_m3u.txt)
-          echo "Baixando a lista de: $LINK"
-          curl -L "$LINK" -o public/ETFlix_list/ETFlix_list.m3u
+          echo "link_atual=$LINK" >> $GITHUB_ENV
 
-      - name: Commit e push se houver mudanças
-        if: env.link_modificado == 'true'
+      - name: Comparar com link anterior
+        id: comparar
         run: |
-          git add public/ETFlix_list/ETFlix_list.m3u link_anterior.txt
-          git commit -m "Atualização automática da lista ETFlix"
+          LINK_ANTERIOR=$(cat link_anterior.txt 2>/dev/null || echo "")
+          if [ "$LINK_ANTERIOR" != "$link_atual" ]; then
+            echo "mudou=true" >> $GITHUB_ENV
+          else
+            echo "mudou=false" >> $GITHUB_ENV
+          fi
+
+      - name: Baixar nova lista M3U se mudou
+        if: env.mudou == 'true'
+        run: |
+          curl -L --output ETFlix_list/ETFlix_list.m3u "$link_atual"
+          echo "$link_atual" > link_anterior.txt
+
+      - name: Commit e Push
+        if: env.mudou == 'true'
+        run: |
+          git add ETFlix_list/ETFlix_list.m3u link_anterior.txt
+          git commit -m "Atualizar lista M3U"
           git push
