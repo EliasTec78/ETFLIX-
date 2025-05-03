@@ -1,43 +1,46 @@
-name: Atualizar Lista M3U
+name: Atualizar lista M3U original
 
 on:
   schedule:
-    - cron: '0 12 * * *'   # 09h em Brasília
-    - cron: '0 15 * * *'   # 12h em Brasília
+    - cron: '0 */6 * * *' # Executa a cada 6 horas
   workflow_dispatch:
 
 jobs:
-  atualizar:
+  atualizar-lista:
     runs-on: ubuntu-latest
+
     steps:
-      - name: Checkout do repositório
+      - name: Clonar repositório
         uses: actions/checkout@v3
 
-      - name: Configurar Git
-        run: |
-          git config user.name "github-actions"
-          git config user.email "github-actions@github.com"
-
-      - name: Verificar e baixar nova lista se link mudou
+      - name: Verificar link atual e anterior
         run: |
           LINK_ATUAL=$(cat link_m3u.txt)
           echo "Link atual: $LINK_ATUAL"
 
-          LINK_ANTERIOR=""
           if [ -f link_anterior.txt ]; then
             LINK_ANTERIOR=$(cat link_anterior.txt)
+          else
+            LINK_ANTERIOR=""
           fi
           echo "Link anterior: $LINK_ANTERIOR"
 
           if [ "$LINK_ATUAL" != "$LINK_ANTERIOR" ]; then
-            echo "Link mudou. Baixando nova lista..."
+            echo "Link mudou, baixando nova lista..."
             mkdir -p ETFlix_list
             curl -L "$LINK_ATUAL" -o ETFlix_list/ETFlix_list.m3u
-
             echo "$LINK_ATUAL" > link_anterior.txt
-            git add ETFlix_list/ETFlix_list.m3u link_anterior.txt
-            git commit -m "Atualização automática da lista M3U original"
-            git push
+            echo "update=true" >> $GITHUB_ENV
           else
+            echo "update=false" >> $GITHUB_ENV
             echo "Link não mudou. Nada será feito."
           fi
+
+      - name: Commit e push se houver mudanças
+        if: env.update == 'true'
+        run: |
+          git config user.name "github-actions"
+          git config user.email "github-actions@github.com"
+          git add ETFlix_list/ETFlix_list.m3u link_anterior.txt
+          git commit -m "Atualização automática da lista M3U original"
+          git push
