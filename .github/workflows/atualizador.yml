@@ -3,7 +3,7 @@ name: Atualizar ETFlix.m3u
 on:
   push:
     paths:
-      - ETF/link_m3u.txt
+      - link_m3u.txt
   schedule:
     - cron: '0 10 * * *'  # Todos os dias às 10h UTC
   workflow_dispatch:
@@ -18,14 +18,14 @@ jobs:
       - name: Ler o link atual
         id: link_atual
         run: |
-          link=$(cat ETF/link_m3u.txt)
+          link=$(cat link_m3u.txt)
           echo "url_m3u=$link" >> $GITHUB_OUTPUT
 
       - name: Comparar com o link anterior
         id: comparar
         run: |
-          if [ -f ETF/link_anterior.txt ]; then
-            anterior=$(cat ETF/link_anterior.txt)
+          if [ -f link_anterior.txt ]; then
+            anterior=$(cat link_anterior.txt)
           else
             anterior=""
           fi
@@ -42,13 +42,13 @@ jobs:
         if: steps.comparar.outputs.atualizar == 'true'
         run: |
           curl -L "${{ steps.link_atual.outputs.url_m3u }}" --output ETF/ETFlix.m3u
-          echo "${{ steps.link_atual.outputs.url_m3u }}" > ETF/link_anterior.txt
+          echo "${{ steps.link_atual.outputs.url_m3u }}" > link_anterior.txt
 
       - name: Commit e Push
         if: steps.comparar.outputs.atualizar == 'true'
         run: |
           git config user.name "github-actions"
           git config user.email "github-actions@users.noreply.github.com"
-          git add ETF/ETFlix.m3u ETF/link_anterior.txt
+          git add ETF/ETFlix.m3u link_anterior.txt
           git commit -m "Atualiza ETFlix.m3u com nova lista"
           git push
