@@ -1,3 +1,16 @@
 #EXTM3U
-#EXTINF:-1 tvg-id="etflix" group-title="Redirecionamento", Lista ETFLIX
-http://invictosplay.pro/get.php?username=384707115936&password=378601443249&type=m3u_plus&output=mpegts
+#EXT-X-SESSION-DATA:DATA-ID="com.xui.1_5_13"
+#EXTINF:-1 tvg-id="br#globo-s-o-paulo-hd" tvg-name="GLOBO SP FHD" tvg-logo="https://i.ibb.co/wRFXTYR/globo.png" group-title="GLOBO",GLOBO SP FHD
+http://cf2301.site:80/692414414236/657211278483/2315672
+#EXTINF:-1 tvg-id="RecordTVSaoPaulo.br" tvg-name="RECORD SP FHD" tvg-logo="https://i.ibb.co/DDn35v7/Novo-rederecord.png" group-title="RECORD",RECORD SP FHD
+http://cf2301.site:80/692414414236/657211278483/2315858
+#EXTINF:-1 tvg-id="BandSaoPaulo.br" tvg-name="BAND SP FHD" tvg-logo="https://i.ibb.co/w4Xbknr/band.png" group-title="BAND",BAND SP FHD
+http://cf2301.site:80/692414414236/657211278483/415245
+#EXTINF:-1 tvg-id="br#sbt-s-o-paulo-hd" tvg-name="SBT SP FHD" tvg-logo="https://i.ibb.co/FH8vd2F/sbt.png" group-title="SBT",SBT SP FHD
+http://cf2301.site:80/692414414236/657211278483/415689
+#EXTINF:-1 tvg-id="BandNews.br" tvg-name="BAND NEWS FHD" tvg-logo="https://i.ibb.co/xLVV51x/bandnews.png" group-title="NOTICIAS",BAND NEWS FHD
+http://cf2301.site:80/692414414236/657211278483/2315919
+#EXTINF:-1 tvg-id="AnimalPlanet.br" tvg-name="ANIMAL PLANET FHD" tvg-logo="https://i.ibb.co/2qKR3JN/Animal-Planet.png" group-title="DOCUMENTÁRIOS",ANIMAL PLANET FHD
+http://cf2301.site:80/692414414236/657211278483/2315326
+#EXTINF:-1 tvg-id="AE.br" tvg-name="A&E FHD" tvg-logo="https://i.ibb.co/9qdJ6cx/AE.png" group-title="FILMES E SERIES",A&E FHD
+http://cf2301.site:80/692414414236/657211278483/2314928
